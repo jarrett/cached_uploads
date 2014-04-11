@@ -122,7 +122,7 @@ module CachedUploads
     # example, instead of explicitly defining a #screenshot_path method, you can do this:
     # 
     #   has_cached_upload(:screenshot, {
-    #     folder:   ->()    { File.join Rails.root, 'uploads/screenshots' }
+    #     folder:   ->()    { File.join Rails.root, 'uploads/screenshots' },
     #     filename: ->(obj) { "#{obj.id}.png"                             }
     #   })
     # 
