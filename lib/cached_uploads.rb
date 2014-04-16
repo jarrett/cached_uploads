@@ -164,6 +164,11 @@ module CachedUploads
     # 
     # - +md5_attr+: Name of the instance attribute storing the file's MD5 hash. Defaults
     #   to +"tmp_#{file_attr}_md5"+.
+    # 
+    # - +no_prm:+ If set to true, permanent files won't be written to disk. You might
+    #   want to use this if, for example, you're hosting uploaded files on an external
+    #   CDN. Options related to the permanent file have no effect when this option is
+    #   true.
     def has_cached_upload(file_attr, options = {})
       # Set default configs.
       options.reverse_merge!(
@@ -225,14 +230,16 @@ module CachedUploads
         end
       end
       
-      # Register the save callback.
-      after_save do |obj|
-        obj.write_permanent_file file_attr
-      end
+      unless options[:no_prm]
+        # Register the save callback.      
+        after_save do |obj|
+          obj.write_permanent_file file_attr
+        end
       
-      # Register the delete callback.
-      after_destroy do |obj|
-        obj.delete_permanent_file file_attr
+        # Register the delete callback.
+        after_destroy do |obj|
+          obj.delete_permanent_file file_attr
+        end
       end
     end
   end

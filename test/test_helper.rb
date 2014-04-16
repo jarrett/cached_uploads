@@ -29,16 +29,16 @@ module CachedUploads
     included do
       class_attribute :after_save_callbacks
       class_attribute :after_destroy_callbacks
+      self.after_save_callbacks = []
+      self.after_destroy_callbacks = []
     end
     
     module ClassMethods
       def after_save(&proc)
-        self.after_save_callbacks ||= []
         after_save_callbacks << proc
       end
       
       def after_destroy(&proc)
-        self.after_destroy_callbacks ||= []
         after_destroy_callbacks << proc
       end
     end
