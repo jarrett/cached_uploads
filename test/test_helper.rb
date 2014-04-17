@@ -29,8 +29,10 @@ module CachedUploads
     included do
       class_attribute :after_save_callbacks
       class_attribute :after_destroy_callbacks
+      class_attribute :before_save_callbacks
       self.after_save_callbacks = []
       self.after_destroy_callbacks = []
+      self.before_save_callbacks = []
     end
     
     module ClassMethods
@@ -41,6 +43,10 @@ module CachedUploads
       def after_destroy(&proc)
         after_destroy_callbacks << proc
       end
+      
+      def before_save(&proc)
+        before_save_callbacks << proc
+      end
     end
     
     def destroy
@@ -48,6 +54,7 @@ module CachedUploads
     end
     
     def save
+      self.class.before_save_callbacks.each { |proc| proc.call self }
       self.class.after_save_callbacks.each { |proc| proc.call self }
     end
   end
@@ -62,7 +69,7 @@ class Upload
     folder:       ->(u) { File.join UPLOADS_DIR, 'prm_files' },
     tmp_folder:   ->(u) { File.join UPLOADS_DIR, 'tmp_files' },
     filename:     ->(u) { "#{u.name}#{u.file_ext}"           },
-    tmp_filename: ->(u) { "#{u.tmp_file_md5}#{u.file_ext}"   }
+    tmp_filename: ->(u) { "#{u.file_md5}#{u.file_ext}"       }
   )
   
   def self.create_folders

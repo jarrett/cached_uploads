@@ -27,6 +27,16 @@ module CachedUploads
     end
   end
   
+  def write_hash(file_attr)
+    config = self.class.cached_uploads[file_attr.to_sym]    
+    file = send file_attr
+    if file.present?
+      file.rewind
+      md5 = Digest::MD5.hexdigest(file.read)
+      send "#{config[:md5_attr]}=", md5
+    end
+  end
+  
   def write_permanent_file(file_attr)
     config = self.class.cached_uploads[file_attr.to_sym]    
     uploaded_file = send file_attr
@@ -61,7 +71,7 @@ module CachedUploads
     config = self.class.cached_uploads[file_attr.to_sym]
     file = send file_attr
     
-    if file.present?      
+    if file.present?
       # Read the uploaded file, calc its MD5, and write the MD5 instance variable.
       file.rewind
       md5 = Digest::MD5.hexdigest(file.read)
@@ -163,7 +173,9 @@ module CachedUploads
     #   to +"#{file_attr}_ext"+.
     # 
     # - +md5_attr+: Name of the instance attribute storing the file's MD5 hash. Defaults
-    #   to +"tmp_#{file_attr}_md5"+.
+    #   to +"#{file_attr}_md5"+. It is often wise to make this attribute a database
+    #   column. However, if you don't, you still need to define this attribute, so use
+    #   #attr_accessor.
     # 
     # - +no_prm:+ If set to true, permanent files won't be written to disk. You might
     #   want to use this if, for example, you're hosting uploaded files on an external
@@ -177,7 +189,7 @@ module CachedUploads
         tmp_folder_method:   "tmp_#{file_attr}_folder",
         tmp_file_expiration: 48.hours,
         ext_attr:            "#{file_attr}_ext",
-        md5_attr:            "tmp_#{file_attr}_md5"
+        md5_attr:            "#{file_attr}_md5"
       )
       
       # Initialize the configs hash.
@@ -197,8 +209,11 @@ module CachedUploads
         end
       )
       
-      # Define the accessor for the temporary file MD5 string.
-      attr_accessor options[:md5_attr]
+      # Define the accessor for the temporary file MD5 string. (Unless it's already
+      # defined, e.g. as a database column.)
+      unless method_defined? options[:md5_attr]
+        attr_accessor options[:md5_attr]
+      end
       
       # Define the path methods, if given.
       if options[:folder] and options[:filename]
@@ -240,6 +255,11 @@ module CachedUploads
         after_destroy do |obj|
           obj.delete_permanent_file file_attr
         end
+      end
+      
+      # Register the hash writer callback.
+      before_save do |obj|
+        obj.write_hash file_attr
       end
     end
   end

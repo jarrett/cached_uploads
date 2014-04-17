@@ -26,7 +26,7 @@ class NoPrmTest < MiniTest::Unit::TestCase
     File.open(tmp_file_path, 'rb') do |f|
       assert_equal TEST_FILE_MD5, Digest::MD5.hexdigest(f.read)
     end
-    assert_equal TEST_FILE_MD5, upload.tmp_file_md5
+    assert_equal TEST_FILE_MD5, upload.file_md5
   end
   
   class NoPrmUpload
@@ -37,7 +37,7 @@ class NoPrmTest < MiniTest::Unit::TestCase
       :file,
       no_prm: true,
       tmp_folder:   ->(u) { File.join UPLOADS_DIR, 'tmp_files' },
-      tmp_filename: ->(u) { "#{u.tmp_file_md5}#{u.file_ext}"   }
+      tmp_filename: ->(u) { "#{u.file_md5}#{u.file_ext}"   }
     )
   
     def self.create_folders
