@@ -40,10 +40,6 @@ class NoPrmTest < MiniTest::Unit::TestCase
       tmp_filename: ->(u) { "#{u.file_md5}#{u.file_ext}"   }
     )
   
-    def self.create_folders
-      FileUtils.mkdir_p File.join(UPLOADS_DIR, 'tmp_files')
-    end
-  
     attr_accessor :file_ext
   
     attr_accessor :name

@@ -170,7 +170,8 @@ module CachedUploads
     #   cleaned out. Defaults to +48.hours+.
     # 
     # - +ext_attr+: Name of the instance attribute storing the file's extension. Defaults
-    #   to +"#{file_attr}_ext"+.
+    #   to +"#{file_attr}_ext"+. CachedUploads does not define this method for you.
+    #   Typically, this attribute would be a database column.
     # 
     # - +md5_attr+: Name of the instance attribute storing the file's MD5 hash. Defaults
     #   to +"#{file_attr}_md5"+. It is often wise to make this attribute a database
@@ -211,7 +212,10 @@ module CachedUploads
       
       # Define the accessor for the temporary file MD5 string. (Unless it's already
       # defined, e.g. as a database column.)
-      unless method_defined? options[:md5_attr]
+      unless (
+        method_defined? options[:md5_attr] or
+        (respond_to? :columns and columns.map { |c| c.name.to_sym }.include?(options[:md5_attr].to_sym))
+      )
         attr_accessor options[:md5_attr]
       end
       
