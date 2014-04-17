@@ -211,7 +211,9 @@ module CachedUploads
       )
       
       # Define the accessor for the temporary file MD5 string. (Unless it's already
-      # defined, e.g. as a database column.)
+      # defined, e.g. as a database column.) Sometimes ActiveRecord::Base#respond_to?
+      # returns false for database columns, but sometimes not. (It's unclear why.) To
+      # guard against that, we check the column lists as well.
       unless (
         method_defined? options[:md5_attr] or
         (respond_to? :columns and columns.map { |c| c.name.to_sym }.include?(options[:md5_attr].to_sym))
