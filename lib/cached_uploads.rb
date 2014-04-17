@@ -27,13 +27,14 @@ module CachedUploads
     end
   end
   
-  def write_hash(file_attr)
+  def write_permanent_file_md5(file_attr)
     config = self.class.cached_uploads[file_attr.to_sym]    
     file = send file_attr
-    if file.present?
+    method = "#{config[:prm_md5_attr]}="
+    if file.present? and respond_to?(method)
       file.rewind
       md5 = Digest::MD5.hexdigest(file.read)
-      send "#{config[:md5_attr]}=", md5
+      send method, md5
     end
   end
   
@@ -52,7 +53,7 @@ module CachedUploads
         uploaded_file.rewind
         out_file.write uploaded_file.read
       end
-    elsif send(config[:md5_attr]).present?
+    elsif send(config[:tmp_md5_attr]).present?
       # This executes if we've set the temporary file MD5 attribute instead of the file
       # attribute. This is invoked when the user has submitted invalid data at least once.
       # In which case we've saved the uploaded data to a tempfile on the server. Now the
@@ -75,7 +76,7 @@ module CachedUploads
       # Read the uploaded file, calc its MD5, and write the MD5 instance variable.
       file.rewind
       md5 = Digest::MD5.hexdigest(file.read)
-      send "#{config[:md5_attr]}=", md5
+      send "#{config[:tmp_md5_attr]}=", md5
       
       # Write the temporary file, using its MD5 hash to generate the filename.
       file.rewind
@@ -173,10 +174,14 @@ module CachedUploads
     #   to +"#{file_attr}_ext"+. CachedUploads does not define this method for you.
     #   Typically, this attribute would be a database column.
     # 
-    # - +md5_attr+: Name of the instance attribute storing the file's MD5 hash. Defaults
-    #   to +"#{file_attr}_md5"+. It is often wise to make this attribute a database
-    #   column. However, if you don't, you still need to define this attribute, so use
-    #   #attr_accessor.
+    # - +prm_md5_attr+: Name of the instance attribute storing the permanent file's MD5
+    #   hash. Defaults to +"#{file_attr}_md5"+. If this attribute exists, it should be a
+    #   database column, but it need not exist at all.
+    #
+    # - +tmp_md5_attr+: Name of the instance attribute storing the temporary file's MD5
+    #   hash. Defaults to +"tmp_#{file_attr}_md5"+. This attribute is typically not a
+    #   database column. If you don't define it yourself, CachedUploads will define it
+    #   for you.
     # 
     # - +no_prm:+ If set to true, permanent files won't be written to disk. You might
     #   want to use this if, for example, you're hosting uploaded files on an external
@@ -190,7 +195,8 @@ module CachedUploads
         tmp_folder_method:   "tmp_#{file_attr}_folder",
         tmp_file_expiration: 48.hours,
         ext_attr:            "#{file_attr}_ext",
-        md5_attr:            "#{file_attr}_md5"
+        prm_md5_attr:        "#{file_attr}_md5",
+        tmp_md5_attr:        "tmp_#{file_attr}_md5"
       )
       
       # Initialize the configs hash.
@@ -210,15 +216,10 @@ module CachedUploads
         end
       )
       
-      # Define the accessor for the temporary file MD5 string. (Unless it's already
-      # defined, e.g. as a database column.) Sometimes ActiveRecord::Base#respond_to?
-      # returns false for database columns, but sometimes not. (It's unclear why.) To
-      # guard against that, we check the column lists as well.
-      unless (
-        method_defined? options[:md5_attr] or
-        (respond_to? :columns and columns.map { |c| c.name.to_sym }.include?(options[:md5_attr].to_sym))
-      )
-        attr_accessor options[:md5_attr]
+      # Define the accessor for the temporary file MD5 string. This should never be a
+      # database column.
+      unless method_defined? options[:tmp_md5_attr]
+        attr_accessor options[:tmp_md5_attr]
       end
       
       # Define the path methods, if given.
@@ -265,7 +266,7 @@ module CachedUploads
       
       # Register the hash writer callback.
       before_save do |obj|
-        obj.write_hash file_attr
+        obj.write_permanent_file_md5 file_attr
       end
     end
   end

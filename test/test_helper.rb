@@ -69,7 +69,7 @@ class Upload
     folder:       ->(u) { File.join UPLOADS_DIR, 'prm_files' },
     tmp_folder:   ->(u) { File.join UPLOADS_DIR, 'tmp_files' },
     filename:     ->(u) { "#{u.name}#{u.file_ext}"           },
-    tmp_filename: ->(u) { "#{u.file_md5}#{u.file_ext}"       }
+    tmp_filename: ->(u) { "#{u.tmp_file_md5}#{u.file_ext}"   }
   )
   
   def self.create_folders
@@ -79,6 +79,8 @@ class Upload
   end
   
   attr_accessor :file_ext
+  
+  attr_accessor :file_md5
   
   attr_accessor :name
 end

@@ -21,7 +21,7 @@ In the model:
         folder:       ->()  { File.join Rails.root, 'uploads/screenshots'     },
         tmp_folder:   ->()  { File.join Rails.root, 'uploads/tmp_screenshots' },
         filename:     ->(a) { "#{a.id}.png"                                   },
-        tmp_filename: ->(a) { "#{a.file_md5}#{a.file_ext}"                    }
+        tmp_filename: ->(a) { "#{a.tmp_file_md5}#{a.file_ext}"                    }
       })
       
       # This could be a database column instead.

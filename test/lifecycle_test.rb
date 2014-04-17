@@ -15,7 +15,7 @@ class LifecycleTest < MiniTest::Unit::TestCase
     File.open(tmp_file_path, 'rb') do |f|
       assert_equal TEST_FILE_MD5, Digest::MD5.hexdigest(f.read)
     end
-    assert_equal TEST_FILE_MD5, upload.file_md5
+    assert_equal TEST_FILE_MD5, upload.tmp_file_md5
   end
   
   def test_write_permanent_file_with_file_set
@@ -32,7 +32,7 @@ class LifecycleTest < MiniTest::Unit::TestCase
     end
   end
   
-  def test_write_permanent_file_with_file_md5_set
+  def test_write_permanent_file_with_tmp_file_md5_set
     # Instantiate an Upload and write its temp file to disk.
     src_file = Rack::Test::UploadedFile.new TEST_FILE_PATH, 'image/jpeg'
     upload1 = Upload.new
@@ -43,7 +43,7 @@ class LifecycleTest < MiniTest::Unit::TestCase
     # We'll see if this second Upload correctly copies the data from the temporary
     # file to the permanent one.
     upload2 = Upload.new
-    upload2.file_md5 = upload1.file_md5
+    upload2.tmp_file_md5 = upload1.tmp_file_md5
     upload2.file_ext = '.txt'
     upload2.name = 'mango'
     upload2.save
