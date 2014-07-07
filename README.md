@@ -1,4 +1,8 @@
-# Cached Uploads for Rails
+# Gem Deprecated!
+
+This gem is deprecated. Please use [Echo Uploads](https://github.com/jarrett/echo_uploads) instead.
+
+## Cached Uploads for Rails
 
 This module enables you to upload files and persist them in a cache in the event that
 the form must be redisplayed (e.g. due to validation errors). This module also saves
